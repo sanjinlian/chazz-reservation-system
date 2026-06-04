@@ -101,17 +101,18 @@ async function apiCall(action, payload = {}) {
       });
       return { success: true, data: payload.events ? created : created[0] };
     }
-    case "updateStatus": {
+    case "updateReservation": {
       const idx = mockDB.reservations.findIndex(r => r.id === payload.id);
       if (idx >= 0) {
-        mockDB.reservations[idx].status = payload.status;
-        if (payload.status === "Approved") {
-          mockDB.reservations[idx].approvedAt = new Date().toISOString();
-          mockDB.reservations[idx].approvedBy = "admin";
-        }
+        mockDB.reservations[idx] = {
+          ...mockDB.reservations[idx],
+          ...payload,
+          status: "Pending" // Reset to pending when edited
+        };
       }
       return { success: true };
     }
+    case "updateStatus": {
     default: return { success: false, error: "Unknown action" };
   }
 }
@@ -860,6 +861,91 @@ function SuccessPage({ data, onNew, onMyReservations }) {
   );
 }
 
+function EditReservationModal({ reservation, onClose, onSuccess, showToast }) {
+  const [event, setEvent] = useState({
+    eventName: reservation.eventName,
+    location: reservation.location,
+    date: reservation.date,
+    timeSlot: "其他（自訂）",
+    startTime: reservation.startTime,
+    endTime: reservation.endTime,
+    notes: reservation.notes || ""
+  });
+
+  useEffect(() => {
+    const ts = `${reservation.startTime}-${reservation.endTime}`;
+    if (TIME_SLOTS.includes(ts)) setEvent(p => ({ ...p, timeSlot: ts }));
+  }, [reservation]);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    let st = event.startTime;
+    let et = event.endTime;
+    if (event.timeSlot !== "其他（自訂）") {
+      [st, et] = event.timeSlot.split("-");
+    }
+    const res = await apiCall("updateReservation", {
+      id: reservation.id,
+      eventName: event.eventName,
+      location: event.location,
+      date: event.date,
+      startTime: st,
+      endTime: et,
+      notes: event.notes
+    });
+    if (res.success) {
+      showToast("修改成功，已重新送審", "success");
+      onSuccess();
+    } else {
+      showToast("修改失敗", "error");
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <Modal title="編輯預約並重新送審" onClose={onClose}>
+      <div className="form-grid">
+        <div className="form-field full">
+          <label className="form-label">活動名稱</label>
+          <input className="form-input" value={event.eventName} onChange={e => setEvent({...event, eventName: e.target.value})} />
+        </div>
+        <div className="form-field">
+          <label className="form-label">使用地點</label>
+          <select className="form-input form-select" value={event.location} onChange={e => setEvent({...event, location: e.target.value})}>
+            {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+          </select>
+        </div>
+        <div className="form-field">
+          <label className="form-label">活動日期</label>
+          <input type="date" className="form-input" value={event.date} onChange={e => setEvent({...event, date: e.target.value})} />
+        </div>
+        <div className="form-field full">
+          <label className="form-label">時段</label>
+          <select className="form-input form-select" value={event.timeSlot} onChange={e => setEvent({...event, timeSlot: e.target.value})}>
+            {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        {event.timeSlot === "其他（自訂）" && (
+          <>
+            <CustomTimePicker label="開始時間" value={event.startTime} onChange={v => setEvent({...event, startTime: v})} />
+            <CustomTimePicker label="結束時間" value={event.endTime} onChange={v => setEvent({...event, endTime: v})} />
+          </>
+        )}
+        <div className="form-field full">
+          <label className="form-label">備註</label>
+          <textarea className="form-input form-textarea" value={event.notes} onChange={e => setEvent({...event, notes: e.target.value})} />
+        </div>
+      </div>
+      <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
+        <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>取消</button>
+        <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={submitting}>儲存並重新送審</button>
+      </div>
+    </Modal>
+  );
+}
+
 // ─── MY RESERVATIONS ─────────────────────────────────────────────────────────
 function MyReservations({ showToast }) {
   const [step, setStep] = useState("email"); // email | list
@@ -868,6 +954,7 @@ function MyReservations({ showToast }) {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [editingRes, setEditingRes] = useState(null);
 
   const lookup = async () => {
     if (!emailInput.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
@@ -950,8 +1037,23 @@ function MyReservations({ showToast }) {
                 <span>此時段與其他預約重疊，管理員將聯繫您調整。</span>
               </div>
             )}
+            {r.status !== "Cancelled" && r.status !== "Rejected" && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--chazz-border)" }}>
+                <button className="btn btn-secondary" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => setEditingRes(r)}>
+                  ✎ 編輯並重新送審
+                </button>
+              </div>
+            )}
           </div>
         ))
+      )}
+      {editingRes && (
+        <EditReservationModal
+          reservation={editingRes}
+          onClose={() => setEditingRes(null)}
+          onSuccess={() => { setEditingRes(null); lookup(); }}
+          showToast={showToast}
+        />
       )}
     </div>
   );
