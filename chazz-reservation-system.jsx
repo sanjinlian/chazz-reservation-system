@@ -113,6 +113,16 @@ async function apiCall(action, payload = {}) {
       return { success: true };
     }
     case "updateStatus": {
+      const idx = mockDB.reservations.findIndex(r => r.id === payload.id);
+      if (idx >= 0) {
+        mockDB.reservations[idx].status = payload.status;
+        if (payload.status === "Approved") {
+          mockDB.reservations[idx].approvedAt = new Date().toISOString();
+          mockDB.reservations[idx].approvedBy = "admin";
+        }
+      }
+      return { success: true };
+    }
     default: return { success: false, error: "Unknown action" };
   }
 }
