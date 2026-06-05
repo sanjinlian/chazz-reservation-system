@@ -292,6 +292,30 @@ const CSS = `
   .notice.conflict { background: #FFF3E0; border-color: #FFE082; color: #7B3F00; }
   .notice.info { background: #E3F2FD; border-color: #BBDEFB; color: #1565C0; }
 
+  /* CALENDAR */
+  .cal-container { background: white; border: 1px solid var(--chazz-border); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 24px; }
+  .cal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .cal-header-left { display: flex; align-items: center; gap: 16px; }
+  .cal-month-num { font-size: 56px; font-weight: 500; font-family: var(--font-sans); line-height: 1; color: var(--chazz-text); }
+  .cal-divider { width: 1px; height: 50px; background: var(--chazz-border-mid); }
+  .cal-month-text { display: flex; flex-direction: column; }
+  .cal-month-en { font-size: 20px; font-weight: 500; font-family: var(--font-sans); letter-spacing: 0.05em; color: var(--chazz-text); }
+  .cal-year { font-size: 16px; font-family: var(--font-sans); color: var(--chazz-text-mid); }
+  .cal-nav { display: flex; gap: 8px; }
+  .cal-nav-btn { background: none; border: 1px solid var(--chazz-border); border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; color: var(--chazz-text-mid); transition: all 0.2s; }
+  .cal-nav-btn:hover { background: var(--chazz-warm); color: var(--chazz-text); }
+  
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--chazz-border-mid); border-left: 1px solid var(--chazz-border-mid); }
+  .cal-day-header { padding: 12px 0; text-align: center; font-size: 11px; letter-spacing: 0.1em; color: var(--chazz-text); border-right: 1px solid var(--chazz-border-mid); border-bottom: 1px solid var(--chazz-border-mid); }
+  .cal-cell { aspect-ratio: 1; border-right: 1px solid var(--chazz-border-mid); border-bottom: 1px solid var(--chazz-border-mid); padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .cal-cell.empty { background: var(--chazz-cream); opacity: 0.3; }
+  .cal-date-num { font-size: 12px; font-family: var(--font-sans); color: var(--chazz-text-mid); }
+  .cal-dots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; justify-content: center; padding-bottom: 4px; }
+  .cal-dot { width: 14px; height: 14px; border-radius: 50%; }
+  
+  .cal-legend { display: flex; justify-content: center; gap: 24px; margin-top: 32px; }
+  .cal-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--chazz-text-mid); }
+
   @media (max-width: 600px) {
     .form-grid { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -871,6 +895,100 @@ function SuccessPage({ data, onNew, onMyReservations }) {
   );
 }
 
+function VisualCalendar({ reservations }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const handlePrev = () => setCurrentDate(new Date(year, month - 1, 1));
+  const handleNext = () => setCurrentDate(new Date(year, month + 1, 1));
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  const dotsByDate = {};
+  reservations.forEach(r => {
+    if (r.status === "Cancelled" || r.status === "Rejected") return;
+    if (!r.date) return;
+    
+    const d = new Date(r.date);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      if (!dotsByDate[day]) dotsByDate[day] = new Set();
+      dotsByDate[day].add(r.location);
+    }
+  });
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) {
+    cells.push(<div key={`empty-${i}`} className="cal-cell empty" />);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const locations = Array.from(dotsByDate[d] || []);
+    cells.push(
+      <div key={`day-${d}`} className="cal-cell">
+        <div className="cal-date-num">{d}</div>
+        <div className="cal-dots">
+          {locations.map(loc => (
+            <div 
+              key={loc} 
+              className="cal-dot" 
+              style={{ background: loc === "教室" ? "var(--chazz-purple)" : "#E6A23C" }} 
+              title={`${loc}預約`}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const totalCells = cells.length;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 0; i < remaining; i++) {
+    cells.push(<div key={`empty-end-${i}`} className="cal-cell empty" />);
+  }
+
+  return (
+    <div className="cal-container">
+      <div className="cal-header">
+        <div className="cal-header-left">
+          <div className="cal-month-num">{String(month + 1).padStart(2, '0')}</div>
+          <div className="cal-divider" />
+          <div className="cal-month-text">
+            <div className="cal-month-en">{monthNamesEn[month]}</div>
+            <div className="cal-year">{year}</div>
+          </div>
+        </div>
+        <div className="cal-nav">
+          <button className="cal-nav-btn" onClick={handlePrev}>上個月</button>
+          <button className="cal-nav-btn" onClick={handleNext}>下個月</button>
+        </div>
+      </div>
+      
+      <div className="cal-grid">
+        {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => (
+          <div key={day} className="cal-day-header">{day}</div>
+        ))}
+        {cells}
+      </div>
+
+      <div className="cal-legend">
+        <div className="cal-legend-item">
+          <div className="cal-dot" style={{ background: "var(--chazz-purple)" }} />
+          <span>教室預約</span>
+        </div>
+        <div className="cal-legend-item">
+          <div className="cal-dot" style={{ background: "#E6A23C" }} />
+          <span>小包廂預約</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditReservationModal({ reservation, onClose, onSuccess, showToast }) {
   const [event, setEvent] = useState({
     eventName: reservation.eventName,
@@ -1009,13 +1127,16 @@ function MyReservations({ showToast }) {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <h1 className="page-title">我的預約紀錄</h1>
           <p className="page-sub">{email} 的所有預約</p>
         </div>
         <button className="btn btn-ghost" onClick={() => setStep("email")}>切換帳號</button>
       </div>
+      
+      {reservations.length > 0 && <VisualCalendar reservations={reservations} />}
+      
       {reservations.length === 0 ? (
         <div className="empty">
           <div className="empty-icon">📋</div>
@@ -1190,6 +1311,8 @@ function AdminDashboard({ showToast, onLogout }) {
           </div>
         ))}
       </div>
+
+      <VisualCalendar reservations={reservations} />
 
       <div className="tabs">
         {[
