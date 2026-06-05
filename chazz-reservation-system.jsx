@@ -317,7 +317,7 @@ const CSS = `
   .cal-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--chazz-text-mid); }
 
   /* MOBILE MENU */
-  .mobile-menu-toggle { display: none; background: none; border: none; font-size: 20px; color: var(--chazz-text); cursor: pointer; padding: 4px; }
+  .mobile-menu-toggle { display: none; background: none; border: none; font-size: 30px; color: var(--chazz-text-light); cursor: pointer; padding: 4px; }
   .mobile-nav-overlay { display: none; }
 
   @media (max-width: 600px) {
