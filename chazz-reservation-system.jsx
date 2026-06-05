@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import logoSvg from "./logo.svg";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 // REPLACE THESE with your actual values after deploying the Apps Script
@@ -173,8 +174,9 @@ const CSS = `
   .gate { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 32px; background: var(--chazz-cream); }
   .gate-card { background: white; border: 1px solid var(--chazz-border); border-radius: var(--radius-lg); padding: 48px 40px; max-width: 400px; width: 100%; text-align: center; }
   .gate-logo { font-family: var(--font-serif); font-size: 32px; font-weight: 300; letter-spacing: 0.2em; color: var(--chazz-purple); margin-bottom: 4px; }
-  .gate-sub { font-size: 12px; letter-spacing: 0.15em; color: var(--chazz-text-light); margin-bottom: 32px; text-transform: uppercase; }
-  .gate-divider { width: 40px; height: 1px; background: var(--chazz-border-mid); margin: 0 auto 32px; }
+  .gate-sub { font-size: 12px; letter-spacing: 0.15em; color: var(--chazz-text-light); margin-bottom: 8px; text-transform: uppercase; }
+  .gate-brand-logo { max-width: 80%; max-height: 48px; width: auto; height: auto; margin: 0 auto 16px; display: block; }
+  .gate-divider { width: 40px; height: 1px; background: var(--chazz-border-mid); margin: 0 auto 24px; }
   .gate-label { font-size: 13px; color: var(--chazz-text-mid); margin-bottom: 8px; text-align: left; }
   .gate-input { width: 100%; border: 1px solid var(--chazz-border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 16px; font-family: var(--font-sans); background: var(--chazz-cream); color: var(--chazz-text); outline: none; transition: border-color 0.2s; letter-spacing: 0.15em; text-align: center; }
   .gate-input:focus { border-color: var(--chazz-purple-mid); }
@@ -408,6 +410,7 @@ function PasswordGate({ onSuccess }) {
       <div className="gate-card">
         <div className="gate-logo">且自</div>
         <div className="gate-sub">CHAZZ</div>
+        <img src={logoSvg} alt="CHAZZ Logo" className="gate-brand-logo" />
         <div className="gate-divider" />
         <div style={{ marginBottom: 24 }}>
           <p style={{ fontSize: 13, color: "var(--chazz-text-mid)", lineHeight: 1.7, marginBottom: 16 }}>
@@ -1486,7 +1489,7 @@ export default function App() {
       <div className="app">
         <header className="header">
           <div className="header-logo" onClick={() => handleNavClick("form")}>
-            且自 <span>CHAZZ 空間預約</span>
+            且自 <img src={logoSvg} alt="CHAZZ Logo" style={{ height: 18, margin: "0 4px" }} /> <span>空間預約</span>
           </div>
           <button className="mobile-menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? "✕" : "☰"}
