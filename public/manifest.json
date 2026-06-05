@@ -1,0 +1,15 @@
+{
+  "name": "且自 CHAZZ 空間預約系統",
+  "short_name": "CHAZZIN",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F8F6F4",
+  "theme_color": "#F8F6F4",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}
