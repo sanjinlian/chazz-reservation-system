@@ -409,7 +409,7 @@ function PasswordGate({ onSuccess }) {
     <div className="gate">
       <div className="gate-card">
         <div className="gate-logo">且自</div>
-        <div className="gate-sub">CHAZZ</div>
+        <div className="gate-sub">手作 與 咖啡 </div>
         <img src={logoSvg} alt="CHAZZ Logo" className="gate-brand-logo" />
         <div className="gate-divider" />
         <div style={{ marginBottom: 24 }}>
