@@ -176,7 +176,7 @@ const CSS = `
   .gate-sub { font-size: 12px; letter-spacing: 0.15em; color: var(--chazz-text-light); margin-bottom: 32px; text-transform: uppercase; }
   .gate-divider { width: 40px; height: 1px; background: var(--chazz-border-mid); margin: 0 auto 32px; }
   .gate-label { font-size: 13px; color: var(--chazz-text-mid); margin-bottom: 8px; text-align: left; }
-  .gate-input { width: 100%; border: 1px solid var(--chazz-border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 15px; font-family: var(--font-sans); background: var(--chazz-cream); color: var(--chazz-text); outline: none; transition: border-color 0.2s; letter-spacing: 0.15em; text-align: center; }
+  .gate-input { width: 100%; border: 1px solid var(--chazz-border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 16px; font-family: var(--font-sans); background: var(--chazz-cream); color: var(--chazz-text); outline: none; transition: border-color 0.2s; letter-spacing: 0.15em; text-align: center; }
   .gate-input:focus { border-color: var(--chazz-purple-mid); }
   .gate-error { font-size: 12px; color: #C62828; margin-top: 6px; }
   .gate-hint { font-size: 11px; color: var(--chazz-text-light); margin-top: 24px; }
@@ -1439,6 +1439,10 @@ export default function App() {
   const [successData, setSuccessData] = useState(null);
   const [toast, setToast] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [authed, page]);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type, id: Date.now() });
