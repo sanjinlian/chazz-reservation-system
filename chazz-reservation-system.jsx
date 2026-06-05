@@ -346,8 +346,9 @@ const CSS = `
     .cal-container { padding: 24px 16px; }
     .cal-header { flex-direction: column; gap: 16px; align-items: center; }
     .cal-month-num { font-size: 48px; }
-    .cal-day-header { font-size: 10px; letter-spacing: 0; padding: 8px 0; }
-    .cal-cell { padding: 4px; gap: 2px; }
+    .cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); width: 100%; }
+    .cal-day-header { font-size: 10px; letter-spacing: 0; padding: 8px 0; min-width: 0; overflow: hidden; }
+    .cal-cell { padding: 4px; gap: 2px; min-width: 0; }
     .cal-date-num { font-size: 11px; }
     .cal-legend { gap: 12px; flex-wrap: wrap; }
     .cal-dot { width: 10px; height: 10px; }
