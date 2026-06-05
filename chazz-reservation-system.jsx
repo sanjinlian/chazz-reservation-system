@@ -316,7 +316,23 @@ const CSS = `
   .cal-legend { display: flex; justify-content: center; gap: 24px; margin-top: 32px; }
   .cal-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--chazz-text-mid); }
 
+  /* MOBILE MENU */
+  .mobile-menu-toggle { display: none; background: none; border: none; font-size: 20px; color: var(--chazz-text); cursor: pointer; padding: 4px; }
+  .mobile-nav-overlay { display: none; }
+
   @media (max-width: 600px) {
+    .header-nav { display: none; }
+    .mobile-menu-toggle { display: block; }
+    .mobile-nav-overlay { 
+      display: flex; position: absolute; top: 56px; left: 0; right: 0; 
+      background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--chazz-border); padding: 16px 24px; 
+      flex-direction: column; gap: 8px; z-index: 90;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .mobile-nav-overlay .nav-btn { padding: 12px; text-align: left; font-size: 15px; }
+    .mobile-nav-overlay .logout { margin-top: 8px; border-top: 1px solid var(--chazz-border); padding-top: 16px; text-align: center; }
+
     .form-grid { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .form-card { padding: 20px; }
@@ -1422,10 +1438,22 @@ export default function App() {
   const [adminAuthed, setAdminAuthed] = useState(() => sessionStorage.getItem("chazz_admin") === "true");
   const [successData, setSuccessData] = useState(null);
   const [toast, setToast] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type, id: Date.now() });
   }, []);
+
+  const handleNavClick = (newPage) => {
+    setPage(newPage);
+    setSuccessData(null);
+    setMenuOpen(false);
+  };
+
+  const handleLogoutClick = () => {
+    logout();
+    setMenuOpen(false);
+  };
 
   const logout = () => {
     sessionStorage.removeItem("chazz_auth");
@@ -1453,15 +1481,26 @@ export default function App() {
       <style>{CSS}</style>
       <div className="app">
         <header className="header">
-          <div className="header-logo" onClick={() => { setPage("form"); setSuccessData(null); }}>
+          <div className="header-logo" onClick={() => handleNavClick("form")}>
             且自 <span>CHAZZ 空間預約</span>
           </div>
+          <button className="mobile-menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? "✕" : "☰"}
+          </button>
           <nav className="header-nav">
-            <button className={`nav-btn${page === "form" ? " active" : ""}`} onClick={() => { setPage("form"); setSuccessData(null); }}>預約申請</button>
-            <button className={`nav-btn${page === "my" ? " active" : ""}`} onClick={() => setPage("my")}>我的預約</button>
-            <button className={`nav-btn${page === "admin" ? " active" : ""}`} onClick={() => setPage("admin")}>後台管理</button>
-            <button className="nav-btn logout" onClick={logout}>登出</button>
+            <button className={`nav-btn${page === "form" ? " active" : ""}`} onClick={() => handleNavClick("form")}>預約申請</button>
+            <button className={`nav-btn${page === "my" ? " active" : ""}`} onClick={() => handleNavClick("my")}>我的預約</button>
+            <button className={`nav-btn${page === "admin" ? " active" : ""}`} onClick={() => handleNavClick("admin")}>後台管理</button>
+            <button className="nav-btn logout" onClick={handleLogoutClick}>登出</button>
           </nav>
+          {menuOpen && (
+            <div className="mobile-nav-overlay" onClick={() => setMenuOpen(false)}>
+              <button className={`nav-btn${page === "form" ? " active" : ""}`} onClick={(e) => { e.stopPropagation(); handleNavClick("form"); }}>預約申請</button>
+              <button className={`nav-btn${page === "my" ? " active" : ""}`} onClick={(e) => { e.stopPropagation(); handleNavClick("my"); }}>我的預約</button>
+              <button className={`nav-btn${page === "admin" ? " active" : ""}`} onClick={(e) => { e.stopPropagation(); handleNavClick("admin"); }}>後台管理</button>
+              <button className="nav-btn logout" onClick={(e) => { e.stopPropagation(); handleLogoutClick(); }}>登出</button>
+            </div>
+          )}
         </header>
 
         <main className="main">
