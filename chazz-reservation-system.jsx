@@ -175,7 +175,8 @@ const CSS = `
   .gate-card { background: white; border: 1px solid var(--chazz-border); border-radius: var(--radius-lg); padding: 48px 40px; max-width: 400px; width: 100%; text-align: center; }
   .gate-logo { font-family: var(--font-serif); font-size: 32px; font-weight: 300; letter-spacing: 0.2em; color: var(--chazz-purple); margin-bottom: 4px; }
   .gate-sub { font-size: 12px; letter-spacing: 0.15em; color: var(--chazz-text-light); margin-bottom: 8px; text-transform: uppercase; }
-  .gate-brand-logo { max-width: 80%; max-height: 48px; width: auto; height: auto; margin: 0 auto 16px; display: block; }
+  @keyframes fadeLogo { from { opacity: 0; } to { opacity: 1; } }
+  .gate-brand-logo { max-width: 80%; height: 48px; width: auto; margin: 0 auto 16px; display: block; animation: fadeLogo 0.5s ease-out forwards; }
   .gate-divider { width: 40px; height: 1px; background: var(--chazz-border-mid); margin: 0 auto 24px; }
   .gate-label { font-size: 13px; color: var(--chazz-text-mid); margin-bottom: 8px; text-align: left; }
   .gate-input { width: 100%; border: 1px solid var(--chazz-border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 16px; font-family: var(--font-sans); background: var(--chazz-cream); color: var(--chazz-text); outline: none; transition: border-color 0.2s; letter-spacing: 0.15em; text-align: center; }
