@@ -341,6 +341,16 @@ const CSS = `
     .gate-card { padding: 32px 24px; }
     .main { padding: 20px 16px; }
     .header { padding: 0 16px; }
+    
+    /* Mobile Calendar Adjustments */
+    .cal-container { padding: 24px 16px; }
+    .cal-header { flex-direction: column; gap: 16px; align-items: center; }
+    .cal-month-num { font-size: 48px; }
+    .cal-day-header { font-size: 10px; letter-spacing: 0; padding: 8px 0; }
+    .cal-cell { padding: 4px; gap: 2px; }
+    .cal-date-num { font-size: 11px; }
+    .cal-legend { gap: 12px; flex-wrap: wrap; }
+    .cal-dot { width: 10px; height: 10px; }
   }
 `;
 
