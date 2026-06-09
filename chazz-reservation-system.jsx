@@ -579,6 +579,19 @@ function ReservationForm({ onSuccess, showToast }) {
   ]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [calendarReservations, setCalendarReservations] = useState([]);
+  const [loadingCalendar, setLoadingCalendar] = useState(true);
+
+  useEffect(() => {
+    async function fetchCal() {
+      const res = await apiCall("getReservations");
+      if (res.success) {
+        setCalendarReservations(res.data.filter(r => r.status !== "rejected" && r.status !== "cancelled"));
+      }
+      setLoadingCalendar(false);
+    }
+    fetchCal();
+  }, []);
 
   const handleBrandChange = (field, value) => {
     setBrandForm(p => ({ ...p, [field]: value }));
@@ -713,6 +726,13 @@ function ReservationForm({ onSuccess, showToast }) {
         <span>✦</span>
         <span>本系統僅供場地申請使用。預約成功後請等候審核確認信，如有需要設備（投影機、音響）請於備註中說明。</span>
       </div>
+
+      {!loadingCalendar && (
+        <div style={{ marginBottom: 24 }}>
+          <div className="form-section-title">目前預約狀況</div>
+          <VisualCalendar reservations={calendarReservations} />
+        </div>
+      )}
 
       {/* 品牌資訊 */}
       <div className="form-card">
