@@ -1298,8 +1298,16 @@ function AdminDashboard({ showToast, onLogout }) {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("all");
-  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+
+  // New filter states
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterEmail, setFilterEmail] = useState("");
+  const [filterBrand, setFilterBrand] = useState("");
+
+  // Pagination states
+  const [perPage, setPerPage] = useState(5);
+  const [displayCount, setDisplayCount] = useState(5);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1310,6 +1318,11 @@ function AdminDashboard({ showToast, onLogout }) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Reset display limit when filters change
+  useEffect(() => {
+    setDisplayCount(Number(perPage));
+  }, [tab, filterMonth, filterEmail, filterBrand, perPage]);
+
   const updateStatus = async (id, status) => {
     const res = await apiCall("updateStatus", { id, status });
     if (res.success) {
@@ -1319,19 +1332,47 @@ function AdminDashboard({ showToast, onLogout }) {
     } else showToast("操作失敗", "error");
   };
 
+  const now = new Date();
+  const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  const isHistory = (r) => {
+    if (!r.date) return true;
+    const rMonth = r.date.substring(0, 7);
+    return rMonth < currentYearMonth;
+  };
+
+  const nonHistoryReservations = reservations.filter(r => !isHistory(r));
+  const historyReservations = reservations.filter(r => isHistory(r));
+
   const filtered = reservations.filter(r => {
-    if (tab === "pending" && r.status !== "Pending") return false;
-    if (tab === "approved" && r.status !== "Approved") return false;
-    if (tab === "conflict" && r.status !== "Conflict") return false;
-    const q = search.toLowerCase();
-    return !q || r.brandName.toLowerCase().includes(q) || r.eventName.toLowerCase().includes(q) || r.email.toLowerCase().includes(q);
+    if (tab === "history") {
+      if (!isHistory(r)) return false;
+    } else {
+      if (isHistory(r)) return false;
+      if (tab === "pending" && r.status !== "Pending") return false;
+      if (tab === "approved" && r.status !== "Approved") return false;
+      if (tab === "conflict" && r.status !== "Conflict") return false;
+    }
+
+    if (filterMonth && (!r.date || r.date.substring(0, 7) !== filterMonth)) return false;
+    if (filterEmail && r.email !== filterEmail) return false;
+    if (filterBrand && r.brandName !== filterBrand) return false;
+    return true;
   });
 
+  const displayedList = filtered.slice(0, displayCount);
+
+  // Options for dropdowns
+  const uniqueMonths = [...new Set(reservations.map(r => r.date?.substring(0, 7)).filter(Boolean))].sort().reverse();
+  const uniqueEmails = [...new Set(reservations.map(r => r.email).filter(Boolean))].sort();
+  const uniqueBrands = [...new Set(reservations.map(r => r.brandName).filter(Boolean))].sort();
+
   const counts = {
-    all: reservations.length,
-    pending: reservations.filter(r => r.status === "Pending").length,
-    approved: reservations.filter(r => r.status === "Approved").length,
-    conflict: reservations.filter(r => r.status === "Conflict").length,
+    all: nonHistoryReservations.length,
+    pending: nonHistoryReservations.filter(r => r.status === "Pending").length,
+    approved: nonHistoryReservations.filter(r => r.status === "Approved").length,
+    conflict: nonHistoryReservations.filter(r => r.status === "Conflict").length,
+    history: historyReservations.length,
   };
 
   const statCards = [
@@ -1371,6 +1412,7 @@ function AdminDashboard({ showToast, onLogout }) {
           { key: "pending", label: `待審核 (${counts.pending})` },
           { key: "approved", label: `已核准 (${counts.approved})` },
           { key: "conflict", label: `衝突 (${counts.conflict})` },
+          { key: "history", label: `歷史紀錄 (${counts.history})` },
         ].map(t => (
           <button key={t.key} className={`tab${tab === t.key ? " active" : ""}`} onClick={() => setTab(t.key)}>
             {t.label}
@@ -1378,47 +1420,72 @@ function AdminDashboard({ showToast, onLogout }) {
         ))}
       </div>
 
-      <div className="search-bar">
-        <span className="search-icon">🔍</span>
-        <input
-          className="search-input"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="搜尋品牌名稱、活動名稱或 Email..."
-        />
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", background: "white", padding: 16, borderRadius: "var(--radius-lg)", border: "1px solid var(--chazz-border)" }}>
+        <select className="form-input" style={{ width: 140 }} value={filterMonth} onChange={e => setFilterMonth(e.target.value)}>
+          <option value="">所有月份</option>
+          {uniqueMonths.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+        <select className="form-input" style={{ flex: 1, minWidth: 160 }} value={filterEmail} onChange={e => setFilterEmail(e.target.value)}>
+          <option value="">所有 Email</option>
+          {uniqueEmails.map(e => <option key={e} value={e}>{e}</option>)}
+        </select>
+        <select className="form-input" style={{ flex: 1, minWidth: 160 }} value={filterBrand} onChange={e => setFilterBrand(e.target.value)}>
+          <option value="">所有品牌</option>
+          {uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <select className="form-input" style={{ width: 140 }} value={perPage} onChange={e => setPerPage(Number(e.target.value))}>
+          <option value={3}>每頁 3 筆</option>
+          <option value={5}>每頁 5 筆</option>
+          <option value={10}>每頁 10 筆</option>
+          <option value={20}>每頁 20 筆</option>
+        </select>
       </div>
 
       {loading ? (
         <div className="loading"><div className="spinner" /></div>
-      ) : filtered.length === 0 ? (
+      ) : displayedList.length === 0 ? (
         <div className="empty">
           <div className="empty-icon">📋</div>
           <div className="empty-text">目前沒有符合條件的預約</div>
         </div>
       ) : (
-        filtered.map(r => (
-          <div key={r.id} className="res-card" style={{ cursor: "pointer" }} onClick={() => setSelected(r)}>
-            <div className="res-card-header">
-              <div>
-                <div className="res-event-name">{r.eventName}</div>
-                <div className="res-brand">{r.brandName} · {r.contactName} · {r.email}</div>
+        <>
+          {displayedList.map(r => (
+            <div key={r.id} className="res-card" style={{ cursor: "pointer" }} onClick={() => setSelected(r)}>
+              <div className="res-card-header">
+                <div>
+                  <div className="res-event-name">{r.eventName}</div>
+                  <div className="res-brand">{r.brandName} · {r.contactName} · {r.email}</div>
+                </div>
+                <StatusBadge status={r.status} />
               </div>
-              <StatusBadge status={r.status} />
-            </div>
-            <div className="res-meta">
-              <span className="res-meta-item">📍 {r.location}</span>
-              <span className="res-meta-item">📅 {r.date}</span>
-              <span className="res-meta-item">🕐 {formatTimeText(r.startTime, r.endTime)}</span>
-              <span className="res-meta-item" style={{ color: "var(--chazz-text-light)" }}>#{r.id}</span>
-            </div>
-            {(r.status === "Pending" || r.status === "Conflict") && (
-              <div className="res-actions" onClick={e => e.stopPropagation()}>
-                <button className="btn btn-success" onClick={() => updateStatus(r.id, "Approved")}>✓ 核准</button>
-                <button className="btn btn-danger" onClick={() => updateStatus(r.id, "Rejected")}>✕ 拒絕</button>
+              <div className="res-meta">
+                <span className="res-meta-item">📍 {r.location}</span>
+                <span className="res-meta-item">📅 {r.date}</span>
+                <span className="res-meta-item">🕐 {formatTimeText(r.startTime, r.endTime)}</span>
+                <span className="res-meta-item" style={{ color: "var(--chazz-text-light)" }}>#{r.id}</span>
               </div>
-            )}
-          </div>
-        ))
+              {(r.status === "Pending" || r.status === "Conflict") && tab !== "history" && (
+                <div className="res-actions" onClick={e => e.stopPropagation()}>
+                  <button className="btn btn-success" onClick={() => updateStatus(r.id, "Approved")}>✓ 核准</button>
+                  <button className="btn btn-danger" onClick={() => updateStatus(r.id, "Rejected")}>✕ 拒絕</button>
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {filtered.length > displayCount && (
+            <div style={{ textAlign: "center", marginTop: 24, marginBottom: 24 }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setDisplayCount(prev => prev + Number(perPage))}
+                style={{ padding: "12px 32px", borderRadius: 20 }}
+              >
+                ↓ 載入更多 (尚有 {filtered.length - displayCount} 筆)
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {selected && (
